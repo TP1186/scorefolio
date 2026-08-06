@@ -1,28 +1,33 @@
-# AuditSentry proof of concept
+# AuditSentry secure audit portal
 
-AuditSentry is a broker-facing workspace for preparing workers’ compensation premium audits. The proof of concept demonstrates the complete decision flow with synthetic data:
+AuditSentry helps a small business prepare for a workers’ compensation premium audit. The product combines a straightforward public website with a private, signed-in audit workspace.
 
-- payroll and tax-form reconciliation;
-- subcontractor payment and certificate matching;
-- source-linked AI findings;
-- audit-readiness scoring;
-- human resolution workflows;
-- an exportable audit-packet manifest; and
-- a production architecture and data catalog inside the application.
+## Product flow
+
+1. Sign in and open a user-owned audit workspace.
+2. Upload payroll, tax, ledger, policy, and subcontractor records.
+3. Review the required-document checklist and open gaps.
+4. Download a structured audit-packet index for human review.
+5. Delete individual documents or all account data at any time.
+
+## Security model
+
+- Portal routes require an authenticated user.
+- Every API read and write checks the server-provided user ID.
+- Structured audit metadata is stored in Cloudflare D1.
+- Uploaded files are stored without public URLs in Cloudflare R2.
+- Uploads are restricted by extension, MIME type, file signature, and size.
+- Object keys use random identifiers rather than customer filenames.
+- Material workspace actions are recorded in an activity log.
+
+Malware scanning, automated sensitive-data redaction, insurer-specific packet generation, and production AI extraction remain pre-launch integrations. Do not market the app as fully security-certified until an independent review and penetration test are complete.
 
 ## Technology
 
-- Next.js 16, React 19 and TypeScript
-- Vinext and Cloudflare Workers-compatible output
-- Lucide React icons
-- Cloudflare D1 + Drizzle ORM recommended for production records
-- Cloudflare R2 recommended for source documents and generated packets
-- OCR, rules and structured LLM output recommended for the AI pipeline
+- Next.js 16, React 19, and TypeScript
+- Vinext with Cloudflare Workers-compatible output
+- Cloudflare D1 and Drizzle ORM for relational data
+- Cloudflare R2 for private document storage
+- Sites-provided sign-in for the protected portal
 
-The deployed proof of concept intentionally uses deterministic, synthetic seed data from `lib/demo-data.ts`. No personal or customer information is transmitted or stored.
-
-## Product boundaries
-
-This is an operational prototype, not insurance, legal, payroll or tax advice. Production classification recommendations and carrier submissions should require approval by a licensed professional. Exposure values in the demonstration are illustrative scenarios.
-
-See `docs/architecture.md` and `docs/data-model.md` for the production blueprint.
+This application assists with document preparation. It does not provide legal, tax, payroll, or insurance advice. A person must review all output before insurer submission.
