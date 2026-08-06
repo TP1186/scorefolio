@@ -1,0 +1,395 @@
+import type {
+  ActivityItem,
+  AuditDocument,
+  ClientAccount,
+  Finding,
+  Metric,
+  Policy,
+  ReconciliationRow,
+  Subcontractor,
+  TaskItem,
+} from "./types";
+
+export const client: ClientAccount = {
+  id: "client_summit_ridge",
+  name: "Summit Ridge Contracting",
+  initials: "SR",
+  industry: "Commercial construction",
+  employees: 14,
+  subcontractors: 23,
+  location: "Pennsylvania",
+};
+
+export const policy: Policy = {
+  id: "policy_wc_2026_001",
+  carrier: "Acadia Mutual",
+  policyNumber: "WCP-84-21973",
+  type: "Workers’ compensation",
+  period: "Jul 1, 2025 – Jun 30, 2026",
+  auditDeadline: "Aug 28, 2026",
+  estimatedPremium: 68420,
+};
+
+export const metrics: Metric[] = [
+  {
+    label: "Payroll reconciled",
+    value: "$612,480",
+    detail: "98.6% source matched",
+    tone: "positive",
+  },
+  {
+    label: "Subcontractor payments",
+    value: "$284,650",
+    detail: "23 vendors reviewed",
+    tone: "neutral",
+  },
+  {
+    label: "Potential exposure",
+    value: "$18,460",
+    detail: "Across 4 open findings",
+    tone: "warning",
+  },
+];
+
+export const initialFindings: Finding[] = [
+  {
+    id: "finding_coi_missing",
+    title: "Missing workers’ comp certificate",
+    description:
+      "Tidewater Concrete received payments during the audit period, but no matching workers’ compensation certificate was found.",
+    level: "critical",
+    category: "COI",
+    amount: 8240,
+    source: "General ledger + COI register",
+    sourceDetail: "$31,200 paid · 0 valid certificates",
+    action: "Request certificate covering Oct 14–Dec 19, 2025",
+    resolved: false,
+  },
+  {
+    id: "finding_expired_coi",
+    title: "Coverage gap on roofing subcontractor",
+    description:
+      "Northline Roofing’s certificate expired 19 days before its final project payment. The carrier may request evidence of continuous coverage.",
+    level: "high",
+    category: "COI",
+    amount: 5960,
+    source: "Certificate AC-99418",
+    sourceDetail: "Expired May 30 · final payment Jun 18",
+    action: "Collect renewal certificate or policy declaration",
+    resolved: false,
+  },
+  {
+    id: "finding_payroll_variance",
+    title: "W-2 total differs from payroll ledger",
+    description:
+      "The annual W-2 summary is $3,560 below the payroll register. A reimbursement exclusion appears likely but needs supporting detail.",
+    level: "medium",
+    category: "Payroll",
+    amount: 2670,
+    source: "2025–26 payroll reconciliation",
+    sourceDetail: "$612,480 ledger · $608,920 W-2 total",
+    action: "Attach reimbursement ledger and written explanation",
+    resolved: false,
+  },
+  {
+    id: "finding_classification",
+    title: "Mixed-duty employee needs review",
+    description:
+      "One project manager logged field installation hours while assigned to a supervisory class in the uploaded policy schedule.",
+    level: "medium",
+    category: "Classification",
+    amount: 1590,
+    source: "Timecards + policy schedule",
+    sourceDetail: "46 field hours detected across 7 timecards",
+    action: "Have the broker confirm treatment with the carrier",
+    resolved: false,
+  },
+];
+
+export const subcontractors: Subcontractor[] = [
+  {
+    id: "sub_apex",
+    name: "Apex Electrical Group",
+    trade: "Electrical",
+    paid: 42800,
+    status: "covered",
+    coiNumber: "AE-20481",
+    coveragePeriod: "Jan 1–Dec 31, 2026",
+    lastChecked: "Aug 5, 2026",
+    risk: 0,
+  },
+  {
+    id: "sub_northline",
+    name: "Northline Roofing",
+    trade: "Roofing",
+    paid: 68450,
+    status: "expiring",
+    coiNumber: "AC-99418",
+    coveragePeriod: "May 31, 2025–May 30, 2026",
+    lastChecked: "Aug 5, 2026",
+    risk: 5960,
+  },
+  {
+    id: "sub_tidewater",
+    name: "Tidewater Concrete",
+    trade: "Concrete",
+    paid: 31200,
+    status: "missing",
+    coiNumber: "Not on file",
+    coveragePeriod: "—",
+    lastChecked: "Aug 4, 2026",
+    risk: 8240,
+  },
+  {
+    id: "sub_bluebird",
+    name: "Bluebird Painting Co.",
+    trade: "Painting",
+    paid: 18900,
+    status: "covered",
+    coiNumber: "BP-73140",
+    coveragePeriod: "Sep 1, 2025–Aug 31, 2026",
+    lastChecked: "Aug 5, 2026",
+    risk: 0,
+  },
+  {
+    id: "sub_greenway",
+    name: "Greenway Hauling LLC",
+    trade: "Hauling",
+    paid: 27600,
+    status: "mismatch",
+    coiNumber: "GH-55109",
+    coveragePeriod: "Mar 1, 2026–Mar 1, 2027",
+    lastChecked: "Aug 3, 2026",
+    risk: 1710,
+  },
+  {
+    id: "sub_keystone",
+    name: "Keystone Mechanical",
+    trade: "HVAC",
+    paid: 55900,
+    status: "covered",
+    coiNumber: "KM-31087",
+    coveragePeriod: "Nov 1, 2025–Nov 1, 2026",
+    lastChecked: "Aug 5, 2026",
+    risk: 0,
+  },
+  {
+    id: "sub_ironwood",
+    name: "Ironwood Siteworks",
+    trade: "Excavation",
+    paid: 39750,
+    status: "covered",
+    coiNumber: "IS-82771",
+    coveragePeriod: "Apr 15, 2026–Apr 15, 2027",
+    lastChecked: "Aug 5, 2026",
+    risk: 0,
+  },
+];
+
+export const initialDocuments: AuditDocument[] = [
+  {
+    id: "doc_notice",
+    name: "Acadia audit request.pdf",
+    category: "Audit notice",
+    status: "verified",
+    updated: "Aug 2, 2026",
+    size: "1.2 MB",
+    extractedFields: 18,
+  },
+  {
+    id: "doc_payroll",
+    name: "Payroll register 2025-26.xlsx",
+    category: "Payroll",
+    status: "verified",
+    updated: "Aug 4, 2026",
+    size: "824 KB",
+    extractedFields: 426,
+  },
+  {
+    id: "doc_941",
+    name: "Forms 941 combined.pdf",
+    category: "Tax forms",
+    status: "verified",
+    updated: "Aug 4, 2026",
+    size: "3.8 MB",
+    extractedFields: 64,
+  },
+  {
+    id: "doc_w2",
+    name: "W-2 summary 2025.pdf",
+    category: "Tax forms",
+    status: "review",
+    updated: "Aug 4, 2026",
+    size: "632 KB",
+    extractedFields: 31,
+  },
+  {
+    id: "doc_gl",
+    name: "General ledger detail.csv",
+    category: "Ledger",
+    status: "verified",
+    updated: "Aug 5, 2026",
+    size: "2.1 MB",
+    extractedFields: 1180,
+  },
+  {
+    id: "doc_1099",
+    name: "1099 vendor summary.pdf",
+    category: "Subcontractors",
+    status: "verified",
+    updated: "Aug 5, 2026",
+    size: "910 KB",
+    extractedFields: 72,
+  },
+  {
+    id: "doc_missing_coi",
+    name: "Tidewater Concrete COI",
+    category: "Certificate",
+    status: "missing",
+    updated: "Not received",
+    size: "—",
+    extractedFields: 0,
+  },
+];
+
+export const reconciliationRows: ReconciliationRow[] = [
+  {
+    source: "Payroll register",
+    amount: 612480,
+    difference: 0,
+    status: "matched",
+    note: "Primary payroll source",
+  },
+  {
+    source: "Quarterly Forms 941",
+    amount: 612480,
+    difference: 0,
+    status: "matched",
+    note: "Four quarters reconciled",
+  },
+  {
+    source: "W-2 summary",
+    amount: 608920,
+    difference: -3560,
+    status: "review",
+    note: "Likely reimbursement exclusion",
+  },
+  {
+    source: "General ledger · wages",
+    amount: 616240,
+    difference: 3760,
+    status: "explained",
+    note: "Includes $3,760 officer health benefit",
+  },
+];
+
+export const initialTasks: TaskItem[] = [
+  {
+    id: "task_tidewater",
+    title: "Request Tidewater’s historical certificate",
+    owner: "Maya Chen",
+    due: "Today",
+    completed: false,
+    priority: "today",
+  },
+  {
+    id: "task_w2",
+    title: "Document the $3,560 payroll variance",
+    owner: "Daniel Ortiz",
+    due: "Aug 8",
+    completed: false,
+    priority: "soon",
+  },
+  {
+    id: "task_class",
+    title: "Confirm mixed-duty treatment with carrier",
+    owner: "Maya Chen",
+    due: "Aug 11",
+    completed: false,
+    priority: "normal",
+  },
+  {
+    id: "task_packet",
+    title: "Review final packet before submission",
+    owner: "Daniel Ortiz",
+    due: "Aug 20",
+    completed: false,
+    priority: "normal",
+  },
+];
+
+export const activities: ActivityItem[] = [
+  {
+    id: "activity_1",
+    actor: "AuditSentry AI",
+    action: "linked 23 vendor payments to 22 certificate records",
+    time: "12 minutes ago",
+    type: "ai",
+  },
+  {
+    id: "activity_2",
+    actor: "Daniel Ortiz",
+    action: "uploaded the final general ledger detail",
+    time: "1 hour ago",
+    type: "person",
+  },
+  {
+    id: "activity_3",
+    actor: "System",
+    action: "verified all four quarterly Form 941 totals",
+    time: "2 hours ago",
+    type: "system",
+  },
+  {
+    id: "activity_4",
+    actor: "Maya Chen",
+    action: "assigned the mixed-duty review to the carrier team",
+    time: "Yesterday",
+    type: "person",
+  },
+];
+
+export const dataEntities = [
+  { entity: "Agency", purpose: "Broker organization and portfolio ownership", key: "agency_id" },
+  { entity: "Client", purpose: "Insured contractor account", key: "client_id" },
+  { entity: "Policy", purpose: "Carrier, term, premium and audit window", key: "policy_id" },
+  { entity: "Worker", purpose: "Payroll totals, duties and classification history", key: "worker_id" },
+  { entity: "Subcontractor", purpose: "Vendor identity, payments and work performed", key: "subcontractor_id" },
+  { entity: "Certificate", purpose: "Coverage dates, limits and named entities", key: "certificate_id" },
+  { entity: "Document", purpose: "Source metadata, extraction state and storage pointer", key: "document_id" },
+  { entity: "Finding", purpose: "Source-linked discrepancy and exposure estimate", key: "finding_id" },
+  { entity: "Audit packet", purpose: "Versioned submission manifest and review status", key: "packet_id" },
+];
+
+export const stackLayers = [
+  {
+    layer: "Experience",
+    choice: "Next.js 16 + React 19 + TypeScript",
+    reason: "Fast, accessible broker workspace with shared server/client types.",
+  },
+  {
+    layer: "Edge runtime",
+    choice: "Vinext + Cloudflare Workers",
+    reason: "Low-latency document orchestration and deployment close to users.",
+  },
+  {
+    layer: "Structured data",
+    choice: "Cloudflare D1 + Drizzle ORM",
+    reason: "Relational audit records, findings, timelines and portfolio queries.",
+  },
+  {
+    layer: "Document storage",
+    choice: "Cloudflare R2",
+    reason: "Encrypted source documents and generated audit packets without egress fees.",
+  },
+  {
+    layer: "AI pipeline",
+    choice: "OCR + structured extraction + rules + LLM review",
+    reason: "Evidence-linked results; deterministic checks run before narrative reasoning.",
+  },
+  {
+    layer: "Security",
+    choice: "Tenant isolation, encryption, audit log, least-privilege access",
+    reason: "Payroll and tax files require enterprise-grade controls from day one.",
+  },
+];
