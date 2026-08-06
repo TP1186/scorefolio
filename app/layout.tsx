@@ -14,19 +14,19 @@ export async function generateMetadata(): Promise<Metadata> {
   const socialImage = `${protocol}://${host}/og.png`;
 
   return {
-    title: "AuditSentry — Premium Audit Intelligence",
+    title: "AuditSentry — Your Workers’ Comp Audit, Organized",
     description:
-      "An interactive proof of concept for AI-assisted workers’ compensation premium-audit preparation.",
+      "Securely organize workers’ compensation audit records, identify missing documents, and prepare one review-ready packet.",
     openGraph: {
-      title: "AuditSentry — Premium Audit Intelligence",
-      description: "Know the exposure before the auditor does.",
-      images: [{ url: socialImage, width: 1792, height: 922 }],
+      title: "AuditSentry — Your Workers’ Comp Audit, Organized",
+      description: "Upload the records. Find the gaps. Send one clean packet.",
+      images: [{ url: socialImage, width: 1740, height: 909 }],
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: "AuditSentry — Premium Audit Intelligence",
-      description: "Know the exposure before the auditor does.",
+      title: "AuditSentry — Your Workers’ Comp Audit, Organized",
+      description: "Upload the records. Find the gaps. Send one clean packet.",
       images: [socialImage],
     },
   };
