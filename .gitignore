@@ -41,3 +41,8 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+
+# scheduled development automation runtime files
+/automation/logs/
+/automation/*.lock
+/automation/last-message.txt
