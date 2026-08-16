@@ -86,7 +86,9 @@ The product is ready to sell when it can reliably turn a supported set of real c
 Objective: Turn uploaded documents into normalized, traceable records.
 
 - [x] Create background processing queue and document-status lifecycle
-- [ ] Add malware scanning before any document is processed
+- Malware scanning before any document is processed:
+  - [x] Implement the provider-neutral malware scanner adapter, lifecycle enforcement, quarantine behavior, and synthetic safe/unsafe/timeout/provider-error fixtures
+  - [ ] Integrate and validate the selected production malware-scanning provider
 - [ ] Detect password-protected, corrupt, and unsupported files
 - [ ] Extract text from native PDFs
 - [ ] Add OCR for scanned PDFs and images
@@ -324,7 +326,7 @@ Track the following from the first beta customer:
 ### Priority 0 — Must have
 
 - [~] Background document processing - durable queue and lifecycle complete; scanning and extraction providers remain
-- [ ] Malware scanning
+- [~] Malware scanning - provider-neutral adapter and quarantine lifecycle complete; production provider selection and validation remain
 - [ ] OCR and spreadsheet parsing
 - [ ] PII redaction
 - [ ] Source-linked structured extraction

@@ -34,7 +34,7 @@ export type ProcessingDocument = {
   mimeType: string;
 };
 
-type ScanResult =
+export type MalwareScanResult =
   | { outcome: "safe" }
   | { outcome: "needs_review" | "quarantined"; reason: string };
 
@@ -43,7 +43,7 @@ type ExtractionResult =
   | { outcome: "needs_review"; reason: string };
 
 export type DocumentProcessingAdapters = {
-  scan(document: ProcessingDocument): Promise<ScanResult>;
+  scan(document: ProcessingDocument): Promise<MalwareScanResult>;
   extract(document: ProcessingDocument): Promise<ExtractionResult>;
 };
 

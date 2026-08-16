@@ -6,6 +6,10 @@ Work inside the current AuditSentry repository. `DEVELOPMENT_TRACKER.md` is the 
 
 Complete exactly one highest-priority unchecked tracker item that is safely achievable using only the current local repository and synthetic test data.
 
+## Completed directed development step
+
+The provider-neutral malware scanner adapter, lifecycle enforcement, quarantine behavior, and synthetic safe/unsafe/timeout/provider-error fixtures are complete. Resume the normal priority order below. Do not mark the production malware-scanning launch gate complete until a real provider has been selected, configured, and validated.
+
 ## Required workflow
 
 1. Read `DEVELOPMENT_TRACKER.md`, `README.md`, the relevant source files, and the current Git status.

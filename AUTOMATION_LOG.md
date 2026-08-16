@@ -14,3 +14,14 @@ This file records work performed by the native four-hour Codex development autom
 - Deployment: Private Sites version 5 (`appgprj_6a7510c317dc8191a043e95075ca6342~appgver_98eecd671b888191a70aafeefc8690a1`) deployed successfully as `appgdep_6a82095c71c48191bd330894312e879f` at https://auditsentry-premium-audit-poc.quikslvr1186.chatgpt.site. A credentialed production smoke request returned HTTP 200 and confirmed the AuditSentry landing-page content. The in-app browser handoff timed out without changing deployment status.
 - Blocker: None for this queue/lifecycle item. Malware scanning remains a separate launch-gate task and no document is treated as scanned or extracted before that integration exists.
 - Recommended next item: Implement malware scanning and quarantine with synthetic safe, unsafe, timeout, and provider-error fixtures.
+
+### 2026-08-16T22:55:35Z
+
+- Selected item: Milestone 1 - Implement the provider-neutral malware scanner adapter, lifecycle enforcement, quarantine behavior, and synthetic safe/unsafe/timeout/provider-error fixtures.
+- Outcome: Complete. A provider-neutral adapter now reads private document bytes only when a provider is configured, sends only document ID, MIME type, and bytes to the provider, enforces a bounded scan timeout, permits extraction only after a clean verdict, quarantines malicious verdicts, and routes unknown, timeout, provider-error, and unconfigured outcomes to `needs_review` without extraction. The production provider remains intentionally unconfigured and the launch gate remains open.
+- Files changed: malware-scanning adapter, processing adapter type, worker integration, synthetic scanner fixtures and lifecycle tests, development tracker, cycle prompt, and this log.
+- Validation: Focused scanner/lifecycle suite passed 12 tests; `npm run lint` passed; `npm test` passed the production build and all 13 tests; `npm audit --omit=dev --audit-level=high` reported 0 vulnerabilities; `git diff --check` passed.
+- Commit and push: Pending final commit.
+- Deployment: Required because worker application logic changed; pending exact-commit private Sites deployment and smoke check.
+- Blocker: None for the provider-neutral adapter slice. Selecting, configuring, and validating a production malware-scanning provider remains an unresolved external integration and is not marked complete.
+- Recommended next item: Detect password-protected, corrupt, and unsupported files using synthetic fixtures, while keeping extraction gated on a future configured malware-scanning provider.

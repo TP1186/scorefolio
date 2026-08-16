@@ -5,6 +5,14 @@ import {
   assertDocumentTransition,
   runDocumentLifecycle,
 } from "../lib/document-processing.ts";
+import { createMalwareScanner } from "../lib/malware-scanning.ts";
+import {
+  errorProvider,
+  safeProvider,
+  syntheticDocumentBytes,
+  timeoutProvider,
+  unsafeProvider,
+} from "./fixtures/malware-scanner-fixtures.mjs";
 
 function collectTransitions() {
   const transitions = [];
@@ -21,6 +29,34 @@ const document = {
   objectKey: "synthetic/object",
   mimeType: "application/pdf",
 };
+
+function syntheticObjectStore() {
+  return {
+    async get() {
+      return {
+        async arrayBuffer() {
+          return syntheticDocumentBytes.buffer.slice(
+            syntheticDocumentBytes.byteOffset,
+            syntheticDocumentBytes.byteOffset + syntheticDocumentBytes.byteLength,
+          );
+        },
+      };
+    },
+  };
+}
+
+async function runScanLifecycle(provider, timeoutMs = 100) {
+  let extractionCalled = false;
+  const { transitions, record } = collectTransitions();
+  const outcome = await runDocumentLifecycle(document, {
+    scan: createMalwareScanner({ objectStore: syntheticObjectStore(), provider, timeoutMs }),
+    extract: async () => {
+      extractionCalled = true;
+      return { outcome: "ready" };
+    },
+  }, record);
+  return { extractionCalled, outcome, transitions };
+}
 
 test("a safe supported document reaches ready through every processing phase", async () => {
   const { transitions, record } = collectTransitions();
@@ -75,6 +111,74 @@ test("adapter errors remain visible to the queue runner", async () => {
     scan: async () => { throw new Error("Synthetic scanner outage"); },
     extract: async () => ({ outcome: "ready" }),
   }, record), /Synthetic scanner outage/);
+});
+
+test("the provider-neutral scanner passes only synthetic bytes and document metadata", async () => {
+  let received;
+  const provider = {
+    async scan(input, { signal }) {
+      received = { input, signal };
+      return { verdict: "clean" };
+    },
+  };
+  const result = await createMalwareScanner({ objectStore: syntheticObjectStore(), provider })(document);
+
+  assert.equal(result.outcome, "safe");
+  assert.deepEqual(new Uint8Array(received.input.bytes), syntheticDocumentBytes);
+  assert.equal(received.input.documentId, document.documentId);
+  assert.equal(received.input.mimeType, document.mimeType);
+  assert.equal("ownerId" in received.input, false);
+  assert.equal("objectKey" in received.input, false);
+  assert.equal(received.signal instanceof AbortSignal, true);
+});
+
+test("a synthetic safe verdict permits extraction", async () => {
+  const result = await runScanLifecycle(safeProvider);
+
+  assert.equal(result.outcome, "ready");
+  assert.equal(result.extractionCalled, true);
+  assert.deepEqual(result.transitions.map(({ to }) => to), ["scanning", "extracting", "ready"]);
+});
+
+test("a synthetic unsafe verdict quarantines the document before extraction", async () => {
+  const result = await runScanLifecycle(unsafeProvider);
+
+  assert.equal(result.outcome, "quarantined");
+  assert.equal(result.extractionCalled, false);
+  assert.match(result.transitions.at(-1).reason, /quarantined/i);
+});
+
+test("a synthetic scanner timeout stops processing at needs_review", async () => {
+  const result = await runScanLifecycle(timeoutProvider, 5);
+
+  assert.equal(result.outcome, "needs_review");
+  assert.equal(result.extractionCalled, false);
+  assert.match(result.transitions.at(-1).reason, /timed out/i);
+});
+
+test("a synthetic provider error stops processing at needs_review", async () => {
+  const result = await runScanLifecycle(errorProvider);
+
+  assert.equal(result.outcome, "needs_review");
+  assert.equal(result.extractionCalled, false);
+  assert.match(result.transitions.at(-1).reason, /could not be completed/i);
+});
+
+test("an unconfigured production scanner fails closed before object access", async () => {
+  let objectRead = false;
+  const scan = createMalwareScanner({
+    objectStore: {
+      async get() {
+        objectRead = true;
+        return null;
+      },
+    },
+  });
+
+  const result = await scan(document);
+  assert.equal(result.outcome, "needs_review");
+  assert.match(result.reason, /not configured/i);
+  assert.equal(objectRead, false);
 });
 
 test("accepted uploads create durable jobs that the worker drains in the background", () => {
