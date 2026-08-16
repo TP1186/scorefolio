@@ -29,11 +29,33 @@ export const documents = sqliteTable(
     size: integer("size").notNull(),
     category: text("category").notNull().default("Uncategorized"),
     status: text("status").notNull().default("uploaded"),
+    statusReason: text("status_reason"),
+    processedAt: integer("processed_at", { mode: "timestamp_ms" }),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   },
   (table) => [
     index("idx_documents_audit_created").on(table.auditId, table.createdAt),
     index("idx_documents_owner").on(table.ownerId),
+  ],
+);
+
+export const documentProcessingJobs = sqliteTable(
+  "document_processing_jobs",
+  {
+    id: text("id").primaryKey(),
+    documentId: text("document_id").notNull().unique().references(() => documents.id, { onDelete: "cascade" }),
+    auditId: text("audit_id").notNull().references(() => audits.id, { onDelete: "cascade" }),
+    ownerId: text("owner_id").notNull(),
+    status: text("status").notNull().default("queued"),
+    attempts: integer("attempts").notNull().default(0),
+    lockedAt: integer("locked_at", { mode: "timestamp_ms" }),
+    lastError: text("last_error"),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [
+    index("idx_processing_jobs_status_created").on(table.status, table.createdAt),
+    index("idx_processing_jobs_owner").on(table.ownerId),
   ],
 );
 

@@ -1,6 +1,7 @@
 /** Cloudflare Worker entry point for the vinext-starter template. */
 import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
+import { drainDocumentJobs } from "../lib/document-processing";
 
 interface Env {
   ASSETS: Fetcher;
@@ -41,7 +42,23 @@ const worker = {
       }, allowedWidths);
     }
 
-    return handler.fetch(request, env, ctx);
+    const response = await handler.fetch(request, env, ctx);
+    if (url.pathname === "/api/uploads" && request.method === "POST" && response.status === 201) {
+      ctx.waitUntil(drainDocumentJobs(env.DB, {
+        async scan(document) {
+          const storedObject = await env.AUDIT_FILES.head(document.objectKey);
+          if (!storedObject) throw new Error("Uploaded object is unavailable in private storage");
+          return {
+            outcome: "needs_review",
+            reason: "Malware scanning is not configured; this document was not extracted.",
+          } as const;
+        },
+        async extract() {
+          throw new Error("Extraction cannot run before malware scanning succeeds");
+        },
+      }).catch((error: unknown) => console.error("Document queue processing failed", error)));
+    }
+    return response;
   },
 };
 

@@ -1,6 +1,6 @@
 # AuditSentry Development Tracker
 
-Last updated: August 6, 2026  
+Last updated: August 16, 2026
 Current stage: Secure product foundation / pre-beta  
 Target offer: $79 founding-customer beta, then $129 per completed audit
 
@@ -85,7 +85,7 @@ The product is ready to sell when it can reliably turn a supported set of real c
 
 Objective: Turn uploaded documents into normalized, traceable records.
 
-- [ ] Create background processing queue and document-status lifecycle
+- [x] Create background processing queue and document-status lifecycle
 - [ ] Add malware scanning before any document is processed
 - [ ] Detect password-protected, corrupt, and unsupported files
 - [ ] Extract text from native PDFs
@@ -323,7 +323,7 @@ Track the following from the first beta customer:
 
 ### Priority 0 — Must have
 
-- [ ] Background document processing
+- [~] Background document processing - durable queue and lifecycle complete; scanning and extraction providers remain
 - [ ] Malware scanning
 - [ ] OCR and spreadsheet parsing
 - [ ] PII redaction

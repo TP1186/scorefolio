@@ -70,13 +70,21 @@ export async function POST(request: Request) {
   });
 
   try {
-    await DB.prepare(
-      `INSERT INTO documents
-       (id, audit_id, owner_id, filename, object_key, mime_type, size, category, status, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'received', ?)`,
-    ).bind(documentId, auditId, user.userId, file.name.slice(0, 180), objectKey, file.type, file.size, category, Date.now()).run();
-    await DB.prepare("UPDATE audits SET updated_at = ? WHERE id = ? AND owner_id = ?")
-      .bind(Date.now(), auditId, user.userId).run();
+    const now = Date.now();
+    await DB.batch([
+      DB.prepare(
+        `INSERT INTO documents
+         (id, audit_id, owner_id, filename, object_key, mime_type, size, category, status, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'uploaded', ?)`,
+      ).bind(documentId, auditId, user.userId, file.name.slice(0, 180), objectKey, file.type, file.size, category, now),
+      DB.prepare(
+        `INSERT INTO document_processing_jobs
+         (id, document_id, audit_id, owner_id, status, attempts, created_at, updated_at)
+         VALUES (?, ?, ?, ?, 'queued', 0, ?, ?)`,
+      ).bind(crypto.randomUUID(), documentId, auditId, user.userId, now, now),
+      DB.prepare("UPDATE audits SET updated_at = ? WHERE id = ? AND owner_id = ?")
+        .bind(now, auditId, user.userId),
+    ]);
     await recordActivity(DB, user.userId, "document.uploaded", `${category} uploaded`, auditId);
   } catch (error) {
     await AUDIT_FILES.delete(objectKey);

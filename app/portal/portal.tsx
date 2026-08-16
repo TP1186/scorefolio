@@ -41,6 +41,8 @@ type StoredDocument = {
   size: number;
   category: string;
   status: string;
+  statusReason: string | null;
+  processedAt: number | null;
   createdAt: number;
 };
 type Workspace = {
@@ -80,6 +82,16 @@ function initials(name: string) {
   return name.split(/\s+/).map((part) => part[0]).filter(Boolean).slice(0, 2).join("").toUpperCase() || "AS";
 }
 
+const documentStatusLabels: Record<string, string> = {
+  uploaded: "Queued",
+  scanning: "Scanning",
+  extracting: "Extracting",
+  ready: "Ready",
+  needs_review: "Needs review",
+  quarantined: "Quarantined",
+  failed: "Failed",
+};
+
 export default function Portal({ initialUser }: { initialUser: { displayName: string; email: string } }) {
   const [activeView, setActiveView] = useState<View>("overview");
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
@@ -91,8 +103,8 @@ export default function Portal({ initialUser }: { initialUser: { displayName: st
   const [companyName, setCompanyName] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
-  async function loadWorkspace() {
-    setLoading(true);
+  async function loadWorkspace(showLoading = true) {
+    if (showLoading) setLoading(true);
     try {
       const response = await fetch("/api/workspace", { cache: "no-store" });
       if (!response.ok) throw new Error("Your private workspace could not be loaded.");
@@ -102,7 +114,7 @@ export default function Portal({ initialUser }: { initialUser: { displayName: st
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Something went wrong.");
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   }
 
@@ -127,8 +139,17 @@ export default function Portal({ initialUser }: { initialUser: { displayName: st
     return () => { active = false; };
   }, []);
 
+  useEffect(() => {
+    const processing = workspace?.documents.some((document) => ["uploaded", "scanning", "extracting"].includes(document.status));
+    if (!processing) return;
+    const timer = window.setInterval(() => void loadWorkspace(false), 3000);
+    return () => window.clearInterval(timer);
+  }, [workspace?.documents]);
+
   const presentCategories = useMemo(
-    () => new Set(workspace?.documents.map((document) => document.category) ?? []),
+    () => new Set(workspace?.documents
+      .filter((document) => !["quarantined", "failed"].includes(document.status))
+      .map((document) => document.category) ?? []),
     [workspace?.documents],
   );
   const completeCount = requiredDocuments.filter((item) => presentCategories.has(item.category)).length;
@@ -157,7 +178,7 @@ export default function Portal({ initialUser }: { initialUser: { displayName: st
       } : current);
       setUploadOpen(false);
       setActiveView("documents");
-      setNotice(`${payload.document.category} was added to your private workspace.`);
+      setNotice(`${payload.document.category} was queued for secure processing.`);
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Upload failed.");
     } finally {
@@ -361,7 +382,7 @@ function Overview({ workspace, readiness, completeCount, missingCount, presentCa
 }
 
 function Documents({ documents, onUpload, onDelete }: { documents: StoredDocument[]; onUpload: () => void; onDelete: (document: StoredDocument) => void }) {
-  return <div className="portal-stack"><div className="page-heading"><div><span className="eyebrow">Secure file room</span><h1>Your audit documents</h1><p>Every file listed here is tied to your signed-in account.</p></div><button className="button button--portal-primary" onClick={onUpload}><UploadCloud size={17} /> Add document</button></div><div className="portal-panel documents-panel">{documents.length ? <div className="document-table"><div className="document-head"><span>Document</span><span>Category</span><span>Size</span><span>Added</span><span /></div>{documents.map((document) => <div className="document-item" key={document.id}><span className="file-icon"><FileCheck2 size={18} /></span><span className="document-name"><strong>{document.filename}</strong><small>{document.mimeType}</small></span><span>{document.category}</span><span>{formatBytes(document.size)}</span><span>{new Date(document.createdAt).toLocaleDateString()}</span><button aria-label={`Delete ${document.filename}`} onClick={() => void onDelete(document)}><Trash2 size={16} /></button></div>)}</div> : <div className="empty-documents"><span><Files size={29} /></span><h2>No documents yet</h2><p>Your audit begins when you add the first record.</p><button className="button button--portal-primary" onClick={onUpload}><Plus size={17} /> Add your first document</button></div>}</div></div>;
+  return <div className="portal-stack"><div className="page-heading"><div><span className="eyebrow">Secure file room</span><h1>Your audit documents</h1><p>Every file listed here is tied to your signed-in account.</p></div><button className="button button--portal-primary" onClick={onUpload}><UploadCloud size={17} /> Add document</button></div><div className="portal-panel documents-panel">{documents.length ? <div className="document-table"><div className="document-head"><span>Document</span><span>Category</span><span>Size</span><span>Added</span><span /></div>{documents.map((document) => <div className="document-item" key={document.id}><span className="file-icon"><FileCheck2 size={18} /></span><span className="document-name"><strong>{document.filename}</strong><small>{document.mimeType}</small>{document.statusReason ? <small className="document-reason">{document.statusReason}</small> : null}</span><span className="document-category"><span>{document.category}</span><small className={`document-state document-state--${document.status}`}>{documentStatusLabels[document.status] ?? document.status}</small></span><span>{formatBytes(document.size)}</span><span>{new Date(document.createdAt).toLocaleDateString()}</span><button aria-label={`Delete ${document.filename}`} onClick={() => void onDelete(document)}><Trash2 size={16} /></button></div>)}</div> : <div className="empty-documents"><span><Files size={29} /></span><h2>No documents yet</h2><p>Your audit begins when you add the first record.</p><button className="button button--portal-primary" onClick={onUpload}><Plus size={17} /> Add your first document</button></div>}</div></div>;
 }
 
 function Findings({ presentCategories, onUpload }: { presentCategories: Set<string>; onUpload: () => void }) {

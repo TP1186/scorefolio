@@ -13,6 +13,8 @@ export type StoredDocument = {
   size: number;
   category: string;
   status: string;
+  statusReason: string | null;
+  processedAt: number | null;
   createdAt: number;
 };
 
@@ -44,7 +46,23 @@ export async function ensurePortalSchema(db: D1Database) {
       size INTEGER NOT NULL,
       category TEXT NOT NULL DEFAULT 'Uncategorized',
       status TEXT NOT NULL DEFAULT 'uploaded',
+      status_reason TEXT,
+      processed_at INTEGER,
       created_at INTEGER NOT NULL,
+      FOREIGN KEY (audit_id) REFERENCES audits(id) ON DELETE CASCADE
+    )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS document_processing_jobs (
+      id TEXT PRIMARY KEY NOT NULL,
+      document_id TEXT NOT NULL UNIQUE,
+      audit_id TEXT NOT NULL,
+      owner_id TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'queued',
+      attempts INTEGER NOT NULL DEFAULT 0,
+      locked_at INTEGER,
+      last_error TEXT,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
       FOREIGN KEY (audit_id) REFERENCES audits(id) ON DELETE CASCADE
     )`),
     db.prepare(`CREATE TABLE IF NOT EXISTS activity (
@@ -59,6 +77,8 @@ export async function ensurePortalSchema(db: D1Database) {
     db.prepare("CREATE INDEX IF NOT EXISTS idx_audits_owner_updated ON audits(owner_id, updated_at)"),
     db.prepare("CREATE INDEX IF NOT EXISTS idx_documents_audit_created ON documents(audit_id, created_at)"),
     db.prepare("CREATE INDEX IF NOT EXISTS idx_documents_owner ON documents(owner_id)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS idx_processing_jobs_status_created ON document_processing_jobs(status, created_at)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS idx_processing_jobs_owner ON document_processing_jobs(owner_id)"),
     db.prepare("CREATE INDEX IF NOT EXISTS idx_activity_owner_created ON activity(owner_id, created_at)"),
   ]);
 }
@@ -94,6 +114,8 @@ export function mapDocument(row: Record<string, unknown>): StoredDocument {
     size: Number(row.size),
     category: String(row.category),
     status: String(row.status),
+    statusReason: row.status_reason ? String(row.status_reason) : null,
+    processedAt: row.processed_at ? Number(row.processed_at) : null,
     createdAt: Number(row.created_at),
   };
 }

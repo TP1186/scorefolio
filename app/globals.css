@@ -248,6 +248,12 @@ footer > div { display: flex; gap: 22px; font-size: 11px; font-weight: 700; }
 .document-name { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .document-name strong { overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .document-name small { color: var(--muted); font-size: 7px; }
+.document-name .document-reason { overflow: visible; color: #8a6833; line-height: 1.35; text-overflow: initial; white-space: normal; }
+.document-category { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.document-state { padding: 3px 6px; color: #5f6f6a; background: #eef2f0; border-radius: 999px; font-size: 7px; font-weight: 800; line-height: 1; text-transform: uppercase; }
+.document-state--ready { color: #277057; background: var(--mint); }
+.document-state--needs_review, .document-state--quarantined, .document-state--failed { color: #94601f; background: var(--amber-soft); }
+.document-state--scanning, .document-state--extracting { color: #386a8b; background: #e8f2f8; }
 .document-item > button { display: grid; place-items: center; color: #9a6868; background: transparent; border: 0; cursor: pointer; }
 .empty-documents, .all-clear { min-height: 360px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; text-align: center; }
 .empty-documents > span, .all-clear > span { width: 56px; height: 56px; display: grid; place-items: center; color: #397962; background: var(--mint); border-radius: 15px; }

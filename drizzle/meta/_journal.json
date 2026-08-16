@@ -8,6 +8,13 @@
       "when": 1786060256985,
       "tag": "0000_light_strong_guy",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1786906530018,
+      "tag": "0001_clever_namor",
+      "breakpoints": true
     }
   ]
 }
