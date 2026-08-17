@@ -3,6 +3,7 @@ import type {
   ExtractionResult,
   ProcessingDocument,
 } from "./document-processing";
+import { redactSocialSecurityNumbers } from "./pii-redaction.ts";
 
 type PrivateObjectBody = {
   arrayBuffer(): Promise<ArrayBuffer>;
@@ -25,6 +26,7 @@ type NativePdfExtractorOptions = {
 export type ExtractedPdfPage = {
   pageNumber: number;
   text: string;
+  redactionCount: number;
 };
 
 type NativePdfTextResult =
@@ -87,17 +89,21 @@ export async function extractNativePdfText(
     }
 
     const extracted = await withTimeout(extractText(pdf, { mergePages: false }), timeoutMs);
-    const pages = extracted.text.map((text, index) => ({
+    const unredactedPages = extracted.text.map((text, index) => ({
       pageNumber: index + 1,
       text: text.trim(),
     }));
-    const totalCharacters = pages.reduce((total, page) => total + page.text.length, 0);
+    const totalCharacters = unredactedPages.reduce((total, page) => total + page.text.length, 0);
     if (totalCharacters > maxTextCharacters) {
       return { outcome: "needs_review", reason: extractionReasons.textLimit };
     }
-    if (!pages.some((page) => page.text.length > 0)) {
+    if (!unredactedPages.some((page) => page.text.length > 0)) {
       return { outcome: "needs_review", reason: extractionReasons.noText };
     }
+    const pages = unredactedPages.map((page) => {
+      const redacted = redactSocialSecurityNumbers(page.text);
+      return { ...page, text: redacted.text, redactionCount: redacted.redactionCount };
+    });
     return { outcome: "ready", pages };
   } catch (error) {
     return {
@@ -136,8 +142,8 @@ export function createNativePdfExtractor({
         .bind(document.documentId, document.ownerId),
       ...result.pages.map((page) => db.prepare(
         `INSERT INTO document_text_pages
-         (id, document_id, audit_id, owner_id, page_number, text, character_count, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+         (id, document_id, audit_id, owner_id, page_number, text, character_count, redaction_count, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       ).bind(
         crypto.randomUUID(),
         document.documentId,
@@ -146,6 +152,7 @@ export function createNativePdfExtractor({
         page.pageNumber,
         page.text,
         page.text.length,
+        page.redactionCount,
         now,
       )),
     ]);

@@ -4,6 +4,7 @@ import type {
   ExtractionResult,
   ProcessingDocument,
 } from "./document-processing";
+import { redactSocialSecurityNumbers } from "./pii-redaction.ts";
 
 type PrivateObjectBody = {
   arrayBuffer(): Promise<ArrayBuffer>;
@@ -37,6 +38,7 @@ export type ExtractedSpreadsheetCell = {
   valueType: "text" | "number" | "boolean" | "date" | "error" | "formula";
   rawValue: string | null;
   formula: string | null;
+  redactionCount: number;
 };
 
 export type ExtractedSpreadsheetSheet = {
@@ -44,6 +46,7 @@ export type ExtractedSpreadsheetSheet = {
   name: string;
   visibility: "visible" | "hidden" | "veryHidden";
   rowCount: number;
+  redactionCount: number;
   cells: ExtractedSpreadsheetCell[];
 };
 
@@ -159,6 +162,23 @@ function validateCell(
   if (counters.characters > limits.maxTotalValueCharacters) throw new SpreadsheetReviewError(extractionReasons.textLimit);
 }
 
+function redactCell(
+  cell: Omit<ExtractedSpreadsheetCell, "redactionCount">,
+): ExtractedSpreadsheetCell {
+  const rawValue = cell.rawValue === null
+    ? null
+    : redactSocialSecurityNumbers(cell.rawValue);
+  const formula = cell.formula === null
+    ? null
+    : redactSocialSecurityNumbers(cell.formula);
+  return {
+    ...cell,
+    rawValue: rawValue?.text ?? null,
+    formula: formula?.text ?? null,
+    redactionCount: (rawValue?.redactionCount ?? 0) + (formula?.redactionCount ?? 0),
+  };
+}
+
 function parseCsvRows(text: string) {
   const rows: string[][] = [];
   let row: string[] = [];
@@ -236,7 +256,7 @@ export function extractCsvStructure(
       if (row.length > limits.maxColumns) throw new SpreadsheetReviewError(extractionReasons.columnLimit);
       row.forEach((rawValue, columnIndex) => {
         if (rawValue.length === 0) return;
-        const cell: ExtractedSpreadsheetCell = {
+        const unredactedCell = {
           rowNumber: rowIndex + 1,
           columnNumber: columnIndex + 1,
           cellReference: `${columnLabel(columnIndex + 1)}${rowIndex + 1}`,
@@ -244,13 +264,13 @@ export function extractCsvStructure(
           rawValue,
           formula: null,
         };
-        validateCell(cell, counters, limits);
-        cells.push(cell);
+        validateCell({ ...unredactedCell, redactionCount: 0 }, counters, limits);
+        cells.push(redactCell(unredactedCell));
       });
     });
     return {
       outcome: "ready",
-      sheets: [{ sheetIndex: 1, name: "CSV", visibility: "visible", rowCount: rows.length, cells }],
+      sheets: [{ sheetIndex: 1, name: "CSV", visibility: "visible", rowCount: rows.length, redactionCount: 0, cells }],
     };
   } catch (error) {
     return {
@@ -414,17 +434,19 @@ export function extractXlsxStructure(
           references.add(reference);
           const value = readXlsxCell(cellNode, sharedStrings);
           if (!value) continue;
-          const cell = { ...position, cellReference: reference, ...value };
-          validateCell(cell, counters, limits);
+          const unredactedCell = { ...position, cellReference: reference, ...value };
+          validateCell({ ...unredactedCell, redactionCount: 0 }, counters, limits);
           highestRowNumber = Math.max(highestRowNumber, position.rowNumber);
-          cells.push(cell);
+          cells.push(redactCell(unredactedCell));
         }
       }
+      const redactedName = redactSocialSecurityNumbers(name);
       return {
         sheetIndex: sheetOffset + 1,
-        name,
+        name: redactedName.text,
         visibility,
         rowCount: highestRowNumber,
+        redactionCount: redactedName.redactionCount,
         cells,
       };
     });
@@ -452,6 +474,7 @@ function serializeSheetRows(
     visibility: sheet.visibility,
     rowCount: sheet.rowCount,
     cellCount: sheet.cells.length,
+    redactionCount: sheet.redactionCount,
     createdAt: now,
   }));
 }
@@ -491,6 +514,7 @@ export function createSpreadsheetExtractor({
       valueType: cell.valueType,
       rawValue: cell.rawValue,
       formula: cell.formula,
+      redactionCount: cell.redactionCount,
       createdAt: now,
     })));
 
@@ -501,25 +525,27 @@ export function createSpreadsheetExtractor({
         .bind(document.documentId, document.ownerId),
       db.prepare(
         `INSERT INTO document_workbook_sheets
-         (id, document_id, audit_id, owner_id, sheet_index, name, visibility, row_count, cell_count, created_at)
+         (id, document_id, audit_id, owner_id, sheet_index, name, visibility, row_count, cell_count, redaction_count, created_at)
          SELECT
            json_extract(value, '$.id'), json_extract(value, '$.documentId'), json_extract(value, '$.auditId'),
            json_extract(value, '$.ownerId'), CAST(json_extract(value, '$.sheetIndex') AS INTEGER),
            json_extract(value, '$.name'), json_extract(value, '$.visibility'),
            CAST(json_extract(value, '$.rowCount') AS INTEGER), CAST(json_extract(value, '$.cellCount') AS INTEGER),
+           CAST(json_extract(value, '$.redactionCount') AS INTEGER),
            CAST(json_extract(value, '$.createdAt') AS INTEGER)
          FROM json_each(?)`,
       ).bind(JSON.stringify(sheetRows)),
       db.prepare(
         `INSERT INTO document_workbook_cells
          (id, document_id, sheet_id, audit_id, owner_id, sheet_index, row_number, column_number,
-          cell_reference, value_type, raw_value, formula, created_at)
+          cell_reference, value_type, raw_value, formula, redaction_count, created_at)
          SELECT
            json_extract(value, '$.id'), json_extract(value, '$.documentId'), json_extract(value, '$.sheetId'),
            json_extract(value, '$.auditId'), json_extract(value, '$.ownerId'),
            CAST(json_extract(value, '$.sheetIndex') AS INTEGER), CAST(json_extract(value, '$.rowNumber') AS INTEGER),
            CAST(json_extract(value, '$.columnNumber') AS INTEGER), json_extract(value, '$.cellReference'),
            json_extract(value, '$.valueType'), json_extract(value, '$.rawValue'), json_extract(value, '$.formula'),
+           CAST(json_extract(value, '$.redactionCount') AS INTEGER),
            CAST(json_extract(value, '$.createdAt') AS INTEGER)
          FROM json_each(?)`,
       ).bind(JSON.stringify(cellRows)),

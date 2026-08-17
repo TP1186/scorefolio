@@ -95,7 +95,7 @@ Objective: Turn uploaded documents into normalized, traceable records.
 - [x] Parse CSV and Excel workbooks without flattening important structure
 - [ ] Store extracted text separately from original files
 - [ ] Store page, sheet, row, and cell references for every extracted value
-- [ ] Detect and redact Social Security numbers before AI processing
+- [x] Detect and redact Social Security numbers before AI processing
 - [ ] Add extraction confidence for each field
 - [ ] Create manual correction UI for low-confidence fields
 - [ ] Ensure failed processing never produces a verified result
@@ -216,7 +216,7 @@ The product must not accept real payroll or tax records publicly until every req
 - [x] File-type and file-size restrictions
 - [x] Customer-controlled deletion
 - [ ] Malware scanning and quarantine
-- [ ] Automated PII detection and redaction
+- [~] Automated PII detection and redaction - complete Social Security numbers are redacted; broader PII categories remain
 - [ ] AI-provider zero-training and retention configuration documented
 - [ ] Secrets and encryption-key rotation procedure
 - [ ] Rate limiting for authentication, upload, export, and deletion endpoints
@@ -328,7 +328,7 @@ Track the following from the first beta customer:
 - [~] Background document processing - durable queue and lifecycle complete; scanning and extraction providers remain
 - [~] Malware scanning - provider-neutral adapter and quarantine lifecycle complete; production provider selection and validation remain
 - [~] OCR and spreadsheet parsing - CSV/XLSX sheet, row, column, cell, type, and formula preservation complete; OCR still requires a provider decision
-- [ ] PII redaction
+- [~] PII redaction - complete Social Security number redaction is verified; broader PII categories remain
 - [ ] Source-linked structured extraction
 - [ ] Payroll/941/ledger reconciliation
 - [ ] Certificate coverage checks

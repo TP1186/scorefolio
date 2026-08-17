@@ -6,6 +6,7 @@ import {
   createNativePdfExtractor,
   extractNativePdfText,
 } from "../lib/pdf-text-extraction.ts";
+import { SSN_REDACTION_MARKER } from "../lib/pii-redaction.ts";
 import {
   syntheticForm941Pdf,
   syntheticPayrollPdf,
@@ -51,6 +52,9 @@ test("native payroll PDF text is extracted with one-based source pages", async (
   assert.match(result.pages[0].text, /SYNTHETIC PAYROLL REGISTER/);
   assert.match(result.pages[0].text, /125000\.00/);
   assert.match(result.pages[1].text, /TEST-002 gross wages: 62500\.00/);
+  assert.match(result.pages[1].text, new RegExp(SSN_REDACTION_MARKER.replace(/[\[\]]/g, "\\$&")));
+  assert.doesNotMatch(result.pages[1].text, /987-65-4321/);
+  assert.equal(result.pages[1].redactionCount, 1);
 });
 
 test("synthetic Form 941 fixture preserves page boundaries", async () => {
@@ -105,6 +109,7 @@ test("the PDF adapter stores extracted text separately with page references", as
     assert.equal(statement.args[3], document.ownerId);
     assert.equal(statement.args[4], index + 1);
     assert.equal(statement.args[6], statement.args[5].length);
+    assert.equal(statement.args[7], index === 1 ? 1 : 0);
   }
 });
 

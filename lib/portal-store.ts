@@ -73,6 +73,7 @@ export async function ensurePortalSchema(db: D1Database) {
       page_number INTEGER NOT NULL,
       text TEXT NOT NULL,
       character_count INTEGER NOT NULL,
+      redaction_count INTEGER NOT NULL DEFAULT 0,
       created_at INTEGER NOT NULL,
       FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
       FOREIGN KEY (audit_id) REFERENCES audits(id) ON DELETE CASCADE
@@ -87,6 +88,7 @@ export async function ensurePortalSchema(db: D1Database) {
       visibility TEXT NOT NULL DEFAULT 'visible',
       row_count INTEGER NOT NULL,
       cell_count INTEGER NOT NULL,
+      redaction_count INTEGER NOT NULL DEFAULT 0,
       created_at INTEGER NOT NULL,
       FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
       FOREIGN KEY (audit_id) REFERENCES audits(id) ON DELETE CASCADE
@@ -104,6 +106,7 @@ export async function ensurePortalSchema(db: D1Database) {
       value_type TEXT NOT NULL,
       raw_value TEXT,
       formula TEXT,
+      redaction_count INTEGER NOT NULL DEFAULT 0,
       created_at INTEGER NOT NULL,
       FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
       FOREIGN KEY (sheet_id) REFERENCES document_workbook_sheets(id) ON DELETE CASCADE,

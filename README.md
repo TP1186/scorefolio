@@ -20,7 +20,7 @@ AuditSentry helps a small business prepare for a workers’ compensation premium
 - Object keys use random identifiers rather than customer filenames.
 - Material workspace actions are recorded in an activity log.
 
-Malware scanning, automated sensitive-data redaction, insurer-specific packet generation, and production AI extraction remain pre-launch integrations. Do not market the app as fully security-certified until an independent review and penetration test are complete.
+Production malware scanning, broader sensitive-data redaction beyond complete Social Security numbers, insurer-specific packet generation, and production AI extraction remain pre-launch integrations. Do not market the app as fully security-certified until an independent review and penetration test are complete.
 
 ## Technology
 

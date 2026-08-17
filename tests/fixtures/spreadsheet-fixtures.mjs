@@ -24,12 +24,13 @@ const workbookRelationshipsXml = `<?xml version="1.0" encoding="UTF-8"?>
 </Relationships>`;
 
 const sharedStringsXml = `<?xml version="1.0" encoding="UTF-8"?>
-<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="5" uniqueCount="5">
+<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="6" uniqueCount="6">
   <si><t>SYNTHETIC PAYROLL REGISTER - NOT CUSTOMER DATA</t></si>
   <si><t>Gross Wages</t></si>
   <si><t>TEST-001</t></si>
   <si><r><t>TEST-</t></r><r><t>002</t></r></si>
   <si><t>Quarter 1</t></si>
+  <si><t>Synthetic SSN 987-65-4321</t></si>
 </sst>`;
 
 const payrollSheetXml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -38,6 +39,7 @@ const payrollSheetXml = `<?xml version="1.0" encoding="UTF-8"?>
     <row r="1"><c r="A1" t="s"><v>0</v></c><c r="B1" t="s"><v>1</v></c></row>
     <row r="3"><c r="A3" t="s"><v>2</v></c><c r="B3" t="n"><v>62500.00</v></c><c r="C3"><f>SUM(B3:B4)</f><v>125000.00</v></c></row>
     <row r="4"><c r="A4" t="s"><v>3</v></c><c r="B4"><v>62500.00</v></c><c r="D4" t="b"><v>1</v></c></row>
+    <row r="5"><c r="A5" t="s"><v>5</v></c></row>
     <row r="6"/>
   </sheetData>
 </worksheet>`;

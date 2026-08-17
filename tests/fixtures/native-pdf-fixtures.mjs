@@ -49,6 +49,7 @@ export const syntheticPayrollPdf = createSyntheticNativePdf([
   [
     "SYNTHETIC PAYROLL DETAIL",
     "Privacy-safe employee TEST-001 gross wages: 62500.00",
+    "Synthetic SSN-shaped value for redaction: 987-65-4321",
     "Privacy-safe employee TEST-002 gross wages: 62500.00",
   ],
 ]);

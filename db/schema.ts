@@ -69,6 +69,7 @@ export const documentTextPages = sqliteTable(
     pageNumber: integer("page_number").notNull(),
     text: text("text").notNull(),
     characterCount: integer("character_count").notNull(),
+    redactionCount: integer("redaction_count").notNull().default(0),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   },
   (table) => [
@@ -88,6 +89,7 @@ export const documentWorkbookSheets = sqliteTable(
     visibility: text("visibility").notNull().default("visible"),
     rowCount: integer("row_count").notNull(),
     cellCount: integer("cell_count").notNull(),
+    redactionCount: integer("redaction_count").notNull().default(0),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   },
   (table) => [
@@ -110,6 +112,7 @@ export const documentWorkbookCells = sqliteTable(
     valueType: text("value_type").notNull(),
     rawValue: text("raw_value"),
     formula: text("formula"),
+    redactionCount: integer("redaction_count").notNull().default(0),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   },
   (table) => [

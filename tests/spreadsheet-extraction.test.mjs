@@ -8,6 +8,7 @@ import {
   extractCsvStructure,
   extractXlsxStructure,
 } from "../lib/spreadsheet-extraction.ts";
+import { SSN_REDACTION_MARKER } from "../lib/pii-redaction.ts";
 import {
   syntheticGeneralLedgerCsv,
   syntheticStructuredWorkbook,
@@ -67,6 +68,19 @@ test("CSV extraction preserves logical rows, blank row gaps, quoted commas, and 
   assert.equal(result.sheets[0].cells.every(({ valueType }) => valueType === "text"), true);
 });
 
+test("CSV extraction redacts complete SSNs without changing the source cell reference", () => {
+  const result = extractCsvStructure(new TextEncoder().encode(
+    "SYNTHETIC DATA,SSN\r\nTEST-001,987654321",
+  ));
+
+  assert.equal(result.outcome, "ready");
+  const cell = result.sheets[0].cells.find(({ cellReference }) => cellReference === "B2");
+  assert.equal(cell.rawValue, SSN_REDACTION_MARKER);
+  assert.equal(cell.redactionCount, 1);
+  assert.equal(cell.rowNumber, 2);
+  assert.equal(cell.columnNumber, 2);
+});
+
 test("XLSX extraction preserves sheet order, visibility, sparse rows, types, rich text, and formulas", () => {
   const result = extractXlsxStructure(syntheticStructuredWorkbook);
 
@@ -79,6 +93,8 @@ test("XLSX extraction preserves sheet order, visibility, sparse rows, types, ric
   assert.equal(payrollCells.get("A4").rawValue, "TEST-002");
   assert.equal(payrollCells.get("B3").valueType, "number");
   assert.equal(payrollCells.get("D4").valueType, "boolean");
+  assert.equal(payrollCells.get("A5").rawValue, `Synthetic SSN ${SSN_REDACTION_MARKER}`);
+  assert.equal(payrollCells.get("A5").redactionCount, 1);
   assert.deepEqual(
     { rawValue: payrollCells.get("C3").rawValue, formula: payrollCells.get("C3").formula, valueType: payrollCells.get("C3").valueType },
     { rawValue: "125000.00", formula: "SUM(B3:B4)", valueType: "formula" },
@@ -130,7 +146,7 @@ test("the spreadsheet adapter stores sheet and cell source references separately
   const storedSheets = JSON.parse(db.batches[0][2].args[0]);
   const storedCells = JSON.parse(db.batches[0][3].args[0]);
   assert.deepEqual(storedSheets.map(({ sheetIndex, name, cellCount }) => ({ sheetIndex, name, cellCount })), [
-    { sheetIndex: 1, name: "Payroll Register", cellCount: 8 },
+    { sheetIndex: 1, name: "Payroll Register", cellCount: 9 },
     { sheetIndex: 2, name: "Quarterly Totals", cellCount: 3 },
   ]);
   assert.equal(storedCells.every(({ documentId, auditId, ownerId, sheetId }) =>
@@ -139,6 +155,9 @@ test("the spreadsheet adapter stores sheet and cell source references separately
   assert.equal(storedFormula.rowNumber, 3);
   assert.equal(storedFormula.columnNumber, 3);
   assert.equal(storedFormula.formula, "SUM(B3:B4)");
+  const storedRedaction = storedCells.find(({ cellReference, sheetIndex }) => cellReference === "A5" && sheetIndex === 1);
+  assert.equal(storedRedaction.rawValue, `Synthetic SSN ${SSN_REDACTION_MARKER}`);
+  assert.equal(storedRedaction.redactionCount, 1);
 });
 
 test("a clean, structurally supported XLSX completes the real extraction lifecycle", async () => {

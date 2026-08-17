@@ -282,6 +282,7 @@ test("accepted uploads create durable jobs that the worker drains in the backgro
   const migration = readFileSync(new URL("../drizzle/0001_clever_namor.sql", import.meta.url), "utf8");
   const extractionMigration = readFileSync(new URL("../drizzle/0002_red_odin.sql", import.meta.url), "utf8");
   const spreadsheetMigration = readFileSync(new URL("../drizzle/0003_colorful_madrox.sql", import.meta.url), "utf8");
+  const redactionMigration = readFileSync(new URL("../drizzle/0004_tired_bill_hollister.sql", import.meta.url), "utf8");
 
   assert.match(uploadRoute, /INSERT INTO document_processing_jobs/);
   assert.match(uploadRoute, /allowedTypesByExtension\[extension\]\?\.has\(file\.type\)/);
@@ -301,4 +302,7 @@ test("accepted uploads create durable jobs that the worker drains in the backgro
   assert.match(spreadsheetMigration, /CREATE TABLE `document_workbook_cells`/);
   assert.match(spreadsheetMigration, /UNIQUE INDEX `idx_document_workbook_cells_document_sheet_cell`/);
   assert.match(spreadsheetMigration, /PRAGMA optimize/);
+  assert.match(redactionMigration, /document_text_pages.*redaction_count/);
+  assert.match(redactionMigration, /document_workbook_cells.*redaction_count/);
+  assert.match(redactionMigration, /document_workbook_sheets.*redaction_count/);
 });

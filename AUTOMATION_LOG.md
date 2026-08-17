@@ -61,3 +61,14 @@ This file records work performed by the native four-hour Codex development autom
 - Blocker: None for spreadsheet parsing. OCR remains dependent on the unresolved provider decision.
 - Cleanup note: The temporary deployment archive remains at `C:\Users\tplat\AppData\Local\Temp\auditsentry-sites-5a17242-1786964950290.tar.gz` for a later safe cleanup.
 - Recommended next item: Detect and redact complete Social Security numbers in extracted content before any future AI processing, using only synthetic fixtures.
+
+### 2026-08-17T15:02:59Z
+
+- Selected item: Milestone 1 - Detect and redact Social Security numbers before AI processing.
+- Outcome: Complete. Every current extracted-content path now replaces complete SSN-shaped values with a digit-free marker before returning or persisting derived PDF text, CSV cells, XLSX values, formulas, or sheet names. Original private files remain unchanged. Per-page, per-sheet, and per-cell redaction counts provide auditable evidence without retaining the detected identifier. Broader PII categories remain explicitly partial in the launch gate and Priority 0 backlog.
+- Files changed: SSN redaction utility; PDF and spreadsheet extraction/persistence; D1 schema, generated migration, and runtime bootstrap; clearly synthetic PDF/XLSX fixtures; unit, extraction, persistence, lifecycle, and migration tests; README; development tracker; and this log.
+- Validation: Focused redaction/PDF/spreadsheet/processing suite passed 36 tests; `npm run lint` passed; `npm test` passed the production build and all 37 tests; all five migrations applied cleanly to an in-memory SQLite database with the three redaction counters present and no foreign-key violations; `npm audit --omit=dev --audit-level=high` reported 0 vulnerabilities; `git diff --check` passed.
+- Commit and push: Pending final task commit.
+- Deployment: Required because extraction behavior and the D1 schema changed; pending exact-commit private Sites deployment and safe smoke check.
+- Blocker: None.
+- Recommended next item: Implement the first source-linked structured extraction slice for a synthetic native payroll PDF total, using a deterministic schema and retaining its source page.
