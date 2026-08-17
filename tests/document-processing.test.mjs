@@ -293,4 +293,5 @@ test("accepted uploads create durable jobs that the worker drains in the backgro
   assert.match(migration, /idx_processing_jobs_status_created/);
   assert.match(extractionMigration, /CREATE TABLE `document_text_pages`/);
   assert.match(extractionMigration, /UNIQUE INDEX `idx_document_text_pages_document_page`/);
+  assert.match(extractionMigration, /PRAGMA optimize/);
 });

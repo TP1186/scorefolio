@@ -73,7 +73,6 @@ export const documentTextPages = sqliteTable(
   },
   (table) => [
     uniqueIndex("idx_document_text_pages_document_page").on(table.documentId, table.pageNumber),
-    index("idx_document_text_pages_owner").on(table.ownerId),
   ],
 );
 

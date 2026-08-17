@@ -92,8 +92,8 @@ export async function ensurePortalSchema(db: D1Database) {
     db.prepare("CREATE INDEX IF NOT EXISTS idx_processing_jobs_status_created ON document_processing_jobs(status, created_at)"),
     db.prepare("CREATE INDEX IF NOT EXISTS idx_processing_jobs_owner ON document_processing_jobs(owner_id)"),
     db.prepare("CREATE UNIQUE INDEX IF NOT EXISTS idx_document_text_pages_document_page ON document_text_pages(document_id, page_number)"),
-    db.prepare("CREATE INDEX IF NOT EXISTS idx_document_text_pages_owner ON document_text_pages(owner_id)"),
     db.prepare("CREATE INDEX IF NOT EXISTS idx_activity_owner_created ON activity(owner_id, created_at)"),
+    db.prepare("PRAGMA optimize"),
   ]);
 }
 

@@ -12,4 +12,4 @@ CREATE TABLE `document_text_pages` (
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `idx_document_text_pages_document_page` ON `document_text_pages` (`document_id`,`page_number`);--> statement-breakpoint
-CREATE INDEX `idx_document_text_pages_owner` ON `document_text_pages` (`owner_id`);
+PRAGMA optimize;
