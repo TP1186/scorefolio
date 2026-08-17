@@ -92,7 +92,7 @@ Objective: Turn uploaded documents into normalized, traceable records.
 - [x] Detect password-protected, corrupt, and unsupported files
 - [x] Extract text from native PDFs
 - [ ] Add OCR for scanned PDFs and images
-- [ ] Parse CSV and Excel workbooks without flattening important structure
+- [x] Parse CSV and Excel workbooks without flattening important structure
 - [ ] Store extracted text separately from original files
 - [ ] Store page, sheet, row, and cell references for every extracted value
 - [ ] Detect and redact Social Security numbers before AI processing
@@ -253,7 +253,7 @@ Initial quality targets:
 
 - [ ] Create sanitized payroll-register fixtures
 - [ ] Create four-quarter Form 941 fixtures
-- [ ] Create general-ledger CSV and XLSX fixtures
+- [x] Create general-ledger CSV and XLSX fixtures
 - [ ] Create policy-declaration fixtures
 - [ ] Create subcontractor certificate fixtures
 - [ ] Create scanned, rotated, low-resolution, and corrupted variants
@@ -327,7 +327,7 @@ Track the following from the first beta customer:
 
 - [~] Background document processing - durable queue and lifecycle complete; scanning and extraction providers remain
 - [~] Malware scanning - provider-neutral adapter and quarantine lifecycle complete; production provider selection and validation remain
-- [ ] OCR and spreadsheet parsing
+- [~] OCR and spreadsheet parsing - CSV/XLSX sheet, row, column, cell, type, and formula preservation complete; OCR still requires a provider decision
 - [ ] PII redaction
 - [ ] Source-linked structured extraction
 - [ ] Payroll/941/ledger reconciliation

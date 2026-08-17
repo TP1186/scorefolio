@@ -1,10 +1,12 @@
 /** Cloudflare Worker entry point for the vinext-starter template. */
 import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
+import { createDocumentExtractor } from "../lib/document-extraction";
 import { drainDocumentJobs } from "../lib/document-processing";
 import { createDocumentInspector } from "../lib/document-inspection";
 import { createMalwareScanner } from "../lib/malware-scanning";
 import { createNativePdfExtractor } from "../lib/pdf-text-extraction";
+import { createSpreadsheetExtractor } from "../lib/spreadsheet-extraction";
 
 interface Env {
   ASSETS: Fetcher;
@@ -48,10 +50,14 @@ const worker = {
     const response = await handler.fetch(request, env, ctx);
     if (url.pathname === "/api/uploads" && request.method === "POST" && response.status === 201) {
       const scan = createMalwareScanner({ objectStore: env.AUDIT_FILES });
+      const extract = createDocumentExtractor({
+        extractPdf: createNativePdfExtractor({ db: env.DB, objectStore: env.AUDIT_FILES }),
+        extractSpreadsheet: createSpreadsheetExtractor({ db: env.DB, objectStore: env.AUDIT_FILES }),
+      });
       ctx.waitUntil(drainDocumentJobs(env.DB, {
         scan,
         inspect: createDocumentInspector({ objectStore: env.AUDIT_FILES }),
-        extract: createNativePdfExtractor({ db: env.DB, objectStore: env.AUDIT_FILES }),
+        extract,
       }).catch((error: unknown) => console.error("Document queue processing failed", error)));
     }
     return response;

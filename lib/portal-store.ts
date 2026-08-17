@@ -77,6 +77,38 @@ export async function ensurePortalSchema(db: D1Database) {
       FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
       FOREIGN KEY (audit_id) REFERENCES audits(id) ON DELETE CASCADE
     )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS document_workbook_sheets (
+      id TEXT PRIMARY KEY NOT NULL,
+      document_id TEXT NOT NULL,
+      audit_id TEXT NOT NULL,
+      owner_id TEXT NOT NULL,
+      sheet_index INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      visibility TEXT NOT NULL DEFAULT 'visible',
+      row_count INTEGER NOT NULL,
+      cell_count INTEGER NOT NULL,
+      created_at INTEGER NOT NULL,
+      FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
+      FOREIGN KEY (audit_id) REFERENCES audits(id) ON DELETE CASCADE
+    )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS document_workbook_cells (
+      id TEXT PRIMARY KEY NOT NULL,
+      document_id TEXT NOT NULL,
+      sheet_id TEXT NOT NULL,
+      audit_id TEXT NOT NULL,
+      owner_id TEXT NOT NULL,
+      sheet_index INTEGER NOT NULL,
+      row_number INTEGER NOT NULL,
+      column_number INTEGER NOT NULL,
+      cell_reference TEXT NOT NULL,
+      value_type TEXT NOT NULL,
+      raw_value TEXT,
+      formula TEXT,
+      created_at INTEGER NOT NULL,
+      FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
+      FOREIGN KEY (sheet_id) REFERENCES document_workbook_sheets(id) ON DELETE CASCADE,
+      FOREIGN KEY (audit_id) REFERENCES audits(id) ON DELETE CASCADE
+    )`),
     db.prepare(`CREATE TABLE IF NOT EXISTS activity (
       id TEXT PRIMARY KEY NOT NULL,
       audit_id TEXT,
@@ -92,6 +124,8 @@ export async function ensurePortalSchema(db: D1Database) {
     db.prepare("CREATE INDEX IF NOT EXISTS idx_processing_jobs_status_created ON document_processing_jobs(status, created_at)"),
     db.prepare("CREATE INDEX IF NOT EXISTS idx_processing_jobs_owner ON document_processing_jobs(owner_id)"),
     db.prepare("CREATE UNIQUE INDEX IF NOT EXISTS idx_document_text_pages_document_page ON document_text_pages(document_id, page_number)"),
+    db.prepare("CREATE UNIQUE INDEX IF NOT EXISTS idx_document_workbook_sheets_document_index ON document_workbook_sheets(document_id, sheet_index)"),
+    db.prepare("CREATE UNIQUE INDEX IF NOT EXISTS idx_document_workbook_cells_document_sheet_cell ON document_workbook_cells(document_id, sheet_index, cell_reference)"),
     db.prepare("CREATE INDEX IF NOT EXISTS idx_activity_owner_created ON activity(owner_id, created_at)"),
     db.prepare("PRAGMA optimize"),
   ]);

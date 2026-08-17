@@ -281,6 +281,7 @@ test("accepted uploads create durable jobs that the worker drains in the backgro
   const worker = readFileSync(new URL("../worker/index.ts", import.meta.url), "utf8");
   const migration = readFileSync(new URL("../drizzle/0001_clever_namor.sql", import.meta.url), "utf8");
   const extractionMigration = readFileSync(new URL("../drizzle/0002_red_odin.sql", import.meta.url), "utf8");
+  const spreadsheetMigration = readFileSync(new URL("../drizzle/0003_colorful_madrox.sql", import.meta.url), "utf8");
 
   assert.match(uploadRoute, /INSERT INTO document_processing_jobs/);
   assert.match(uploadRoute, /allowedTypesByExtension\[extension\]\?\.has\(file\.type\)/);
@@ -289,9 +290,15 @@ test("accepted uploads create durable jobs that the worker drains in the backgro
   assert.match(uploadRoute, /'uploaded'/);
   assert.match(worker, /ctx\.waitUntil\(drainDocumentJobs/);
   assert.match(worker, /createNativePdfExtractor/);
+  assert.match(worker, /createSpreadsheetExtractor/);
+  assert.match(worker, /createDocumentExtractor/);
   assert.match(migration, /CREATE TABLE `document_processing_jobs`/);
   assert.match(migration, /idx_processing_jobs_status_created/);
   assert.match(extractionMigration, /CREATE TABLE `document_text_pages`/);
   assert.match(extractionMigration, /UNIQUE INDEX `idx_document_text_pages_document_page`/);
   assert.match(extractionMigration, /PRAGMA optimize/);
+  assert.match(spreadsheetMigration, /CREATE TABLE `document_workbook_sheets`/);
+  assert.match(spreadsheetMigration, /CREATE TABLE `document_workbook_cells`/);
+  assert.match(spreadsheetMigration, /UNIQUE INDEX `idx_document_workbook_cells_document_sheet_cell`/);
+  assert.match(spreadsheetMigration, /PRAGMA optimize/);
 });

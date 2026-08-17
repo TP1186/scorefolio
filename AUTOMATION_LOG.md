@@ -49,3 +49,14 @@ This file records work performed by the native four-hour Codex development autom
 - Blocker: None.
 - Cleanup note: Policy blocked removal of the exact temporary deployment archive, so `C:\Users\tplat\AppData\Local\Temp\auditsentry-sites-1f6bb9f-1786950519539.tar.gz` remains for a later safe cleanup.
 - Recommended next item: Parse CSV and XLSX workbooks without flattening sheet, row, or cell structure using clearly synthetic fixtures; OCR remains dependent on the unresolved provider decision.
+
+### 2026-08-17T11:06:17Z
+
+- Selected item: Milestone 1 - Parse CSV and Excel workbooks without flattening important structure.
+- Outcome: Complete. The clean-scan processing path now parses UTF-8 CSV and XLSX documents while preserving sheet order and visibility, sparse and blank source rows, one-based row and column positions, exact cell references, raw values, value types, rich shared strings, and formulas. Parsed structure is stored separately from the original R2 object in owner-scoped D1 sheet and cell records. Invalid quoting, malformed workbook relationships, unsafe XML constructs, decompression growth, and row/column/sheet/cell/text limits fail closed at `needs_review` without persisting a verified result. All fixtures are clearly synthetic.
+- Files changed: structure-preserving spreadsheet extractor and document-extractor router, worker integration, D1 schema/generated migration/runtime bootstrap, dependency manifests, synthetic CSV/XLSX fixtures and extraction/lifecycle/limit tests, development tracker, and this log.
+- Validation: Focused processing/spreadsheet suite passed 24 tests; `npm run lint` passed; `npm test` passed the production build and all 32 tests; all four migrations applied cleanly to in-memory SQLite with no foreign-key violations and the workbook-cell lookup selected its unique index; `npm audit --omit=dev --audit-level=high` reported 0 vulnerabilities; `git diff --check` passed. Standalone `tsc --noEmit` remains outside the project gates and reports the previously documented Cloudflare ambient-type issues in untouched files; the production Vinext build passed.
+- Commit and push: Pending final validation.
+- Deployment: Required for the application and database-schema change; pending final validation, push, and private Sites deployment.
+- Blocker: None for spreadsheet parsing. OCR remains dependent on the unresolved provider decision.
+- Recommended next item: Detect and redact complete Social Security numbers in extracted content before any future AI processing, using only synthetic fixtures.

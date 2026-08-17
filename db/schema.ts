@@ -76,6 +76,51 @@ export const documentTextPages = sqliteTable(
   ],
 );
 
+export const documentWorkbookSheets = sqliteTable(
+  "document_workbook_sheets",
+  {
+    id: text("id").primaryKey(),
+    documentId: text("document_id").notNull().references(() => documents.id, { onDelete: "cascade" }),
+    auditId: text("audit_id").notNull().references(() => audits.id, { onDelete: "cascade" }),
+    ownerId: text("owner_id").notNull(),
+    sheetIndex: integer("sheet_index").notNull(),
+    name: text("name").notNull(),
+    visibility: text("visibility").notNull().default("visible"),
+    rowCount: integer("row_count").notNull(),
+    cellCount: integer("cell_count").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [
+    uniqueIndex("idx_document_workbook_sheets_document_index").on(table.documentId, table.sheetIndex),
+  ],
+);
+
+export const documentWorkbookCells = sqliteTable(
+  "document_workbook_cells",
+  {
+    id: text("id").primaryKey(),
+    documentId: text("document_id").notNull().references(() => documents.id, { onDelete: "cascade" }),
+    sheetId: text("sheet_id").notNull().references(() => documentWorkbookSheets.id, { onDelete: "cascade" }),
+    auditId: text("audit_id").notNull().references(() => audits.id, { onDelete: "cascade" }),
+    ownerId: text("owner_id").notNull(),
+    sheetIndex: integer("sheet_index").notNull(),
+    rowNumber: integer("row_number").notNull(),
+    columnNumber: integer("column_number").notNull(),
+    cellReference: text("cell_reference").notNull(),
+    valueType: text("value_type").notNull(),
+    rawValue: text("raw_value"),
+    formula: text("formula"),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [
+    uniqueIndex("idx_document_workbook_cells_document_sheet_cell").on(
+      table.documentId,
+      table.sheetIndex,
+      table.cellReference,
+    ),
+  ],
+);
+
 export const activity = sqliteTable(
   "activity",
   {
