@@ -65,6 +65,18 @@ export async function ensurePortalSchema(db: D1Database) {
       FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
       FOREIGN KEY (audit_id) REFERENCES audits(id) ON DELETE CASCADE
     )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS document_text_pages (
+      id TEXT PRIMARY KEY NOT NULL,
+      document_id TEXT NOT NULL,
+      audit_id TEXT NOT NULL,
+      owner_id TEXT NOT NULL,
+      page_number INTEGER NOT NULL,
+      text TEXT NOT NULL,
+      character_count INTEGER NOT NULL,
+      created_at INTEGER NOT NULL,
+      FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
+      FOREIGN KEY (audit_id) REFERENCES audits(id) ON DELETE CASCADE
+    )`),
     db.prepare(`CREATE TABLE IF NOT EXISTS activity (
       id TEXT PRIMARY KEY NOT NULL,
       audit_id TEXT,
@@ -79,6 +91,8 @@ export async function ensurePortalSchema(db: D1Database) {
     db.prepare("CREATE INDEX IF NOT EXISTS idx_documents_owner ON documents(owner_id)"),
     db.prepare("CREATE INDEX IF NOT EXISTS idx_processing_jobs_status_created ON document_processing_jobs(status, created_at)"),
     db.prepare("CREATE INDEX IF NOT EXISTS idx_processing_jobs_owner ON document_processing_jobs(owner_id)"),
+    db.prepare("CREATE UNIQUE INDEX IF NOT EXISTS idx_document_text_pages_document_page ON document_text_pages(document_id, page_number)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS idx_document_text_pages_owner ON document_text_pages(owner_id)"),
     db.prepare("CREATE INDEX IF NOT EXISTS idx_activity_owner_created ON activity(owner_id, created_at)"),
   ]);
 }

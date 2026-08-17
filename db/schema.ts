@@ -1,4 +1,4 @@
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const audits = sqliteTable(
   "audits",
@@ -56,6 +56,24 @@ export const documentProcessingJobs = sqliteTable(
   (table) => [
     index("idx_processing_jobs_status_created").on(table.status, table.createdAt),
     index("idx_processing_jobs_owner").on(table.ownerId),
+  ],
+);
+
+export const documentTextPages = sqliteTable(
+  "document_text_pages",
+  {
+    id: text("id").primaryKey(),
+    documentId: text("document_id").notNull().references(() => documents.id, { onDelete: "cascade" }),
+    auditId: text("audit_id").notNull().references(() => audits.id, { onDelete: "cascade" }),
+    ownerId: text("owner_id").notNull(),
+    pageNumber: integer("page_number").notNull(),
+    text: text("text").notNull(),
+    characterCount: integer("character_count").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [
+    uniqueIndex("idx_document_text_pages_document_page").on(table.documentId, table.pageNumber),
+    index("idx_document_text_pages_owner").on(table.ownerId),
   ],
 );
 

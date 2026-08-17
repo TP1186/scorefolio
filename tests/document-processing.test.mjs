@@ -280,6 +280,7 @@ test("accepted uploads create durable jobs that the worker drains in the backgro
   const uploadRoute = readFileSync(new URL("../app/api/uploads/route.ts", import.meta.url), "utf8");
   const worker = readFileSync(new URL("../worker/index.ts", import.meta.url), "utf8");
   const migration = readFileSync(new URL("../drizzle/0001_clever_namor.sql", import.meta.url), "utf8");
+  const extractionMigration = readFileSync(new URL("../drizzle/0002_red_odin.sql", import.meta.url), "utf8");
 
   assert.match(uploadRoute, /INSERT INTO document_processing_jobs/);
   assert.match(uploadRoute, /allowedTypesByExtension\[extension\]\?\.has\(file\.type\)/);
@@ -287,6 +288,9 @@ test("accepted uploads create durable jobs that the worker drains in the backgro
   assert.match(uploadRoute, /extension === "xls" && isOle/);
   assert.match(uploadRoute, /'uploaded'/);
   assert.match(worker, /ctx\.waitUntil\(drainDocumentJobs/);
+  assert.match(worker, /createNativePdfExtractor/);
   assert.match(migration, /CREATE TABLE `document_processing_jobs`/);
   assert.match(migration, /idx_processing_jobs_status_created/);
+  assert.match(extractionMigration, /CREATE TABLE `document_text_pages`/);
+  assert.match(extractionMigration, /UNIQUE INDEX `idx_document_text_pages_document_page`/);
 });

@@ -1,6 +1,6 @@
 # AuditSentry Development Tracker
 
-Last updated: August 16, 2026
+Last updated: August 17, 2026
 Current stage: Secure product foundation / pre-beta  
 Target offer: $79 founding-customer beta, then $129 per completed audit
 
@@ -90,7 +90,7 @@ Objective: Turn uploaded documents into normalized, traceable records.
   - [x] Implement the provider-neutral malware scanner adapter, lifecycle enforcement, quarantine behavior, and synthetic safe/unsafe/timeout/provider-error fixtures
   - [ ] Integrate and validate the selected production malware-scanning provider
 - [x] Detect password-protected, corrupt, and unsupported files
-- [ ] Extract text from native PDFs
+- [x] Extract text from native PDFs
 - [ ] Add OCR for scanned PDFs and images
 - [ ] Parse CSV and Excel workbooks without flattening important structure
 - [ ] Store extracted text separately from original files

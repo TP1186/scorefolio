@@ -37,3 +37,14 @@ This file records work performed by the native four-hour Codex development autom
 - Blocker: None.
 - Cleanup note: Policy blocked removal of the exact temporary deployment archive and smoke-response file, so both remain in the local temporary directory for a later safe cleanup.
 - Recommended next item: Extract text from native PDFs using clearly synthetic payroll and Form 941 fixtures, preserving source-page references and keeping extraction behind the clean-scan gate.
+
+### 2026-08-17T07:03:36Z
+
+- Selected item: Milestone 1 - Extract text from native PDFs.
+- Outcome: Complete. The clean-scan processing path now uses a Cloudflare-compatible native PDF extractor with bounded page count, extracted-text size, and processing time. Text is persisted separately from original R2 objects in D1 as one record per one-based source page. PDFs without a native text layer stop at `needs_review` for future OCR; unsupported non-PDF extraction also fails closed. Synthetic payroll-register and Form 941 fixtures contain no customer data.
+- Files changed: native PDF extraction adapter, worker integration, D1 schema/generated migration, runtime schema bootstrap, dependency manifests, synthetic PDF fixtures and extraction/lifecycle tests, development tracker, and this log.
+- Validation: Focused processing/extraction suite passed 24 tests; `npm run lint` passed; `npm test` passed the production build and all 25 tests; all three migrations applied cleanly to in-memory SQLite with no foreign-key violations; `npm audit --omit=dev --audit-level=high` reported 0 vulnerabilities; `git diff --check` passed. Standalone `tsc --noEmit` remains outside the project gates and reports existing Cloudflare ambient-type issues in untouched files; the production Vinext build passed.
+- Commit and push: Pending final diff review.
+- Deployment: Required because processing logic and the database schema changed; pending the exact pushed commit.
+- Blocker: None.
+- Recommended next item: Parse CSV and XLSX workbooks without flattening sheet, row, or cell structure using clearly synthetic fixtures; OCR remains dependent on the unresolved provider decision.

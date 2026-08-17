@@ -15,6 +15,13 @@
       "when": 1786906530018,
       "tag": "0001_clever_namor",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1786950009064,
+      "tag": "0002_red_odin",
+      "breakpoints": true
     }
   ]
 }

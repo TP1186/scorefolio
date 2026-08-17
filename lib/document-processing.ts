@@ -42,7 +42,7 @@ export type DocumentInspectionResult =
   | { outcome: "supported" }
   | { outcome: "quarantined"; reason: string };
 
-type ExtractionResult =
+export type ExtractionResult =
   | { outcome: "ready" }
   | { outcome: "needs_review"; reason: string };
 

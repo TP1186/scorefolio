@@ -4,6 +4,7 @@ import handler from "vinext/server/app-router-entry";
 import { drainDocumentJobs } from "../lib/document-processing";
 import { createDocumentInspector } from "../lib/document-inspection";
 import { createMalwareScanner } from "../lib/malware-scanning";
+import { createNativePdfExtractor } from "../lib/pdf-text-extraction";
 
 interface Env {
   ASSETS: Fetcher;
@@ -50,9 +51,7 @@ const worker = {
       ctx.waitUntil(drainDocumentJobs(env.DB, {
         scan,
         inspect: createDocumentInspector({ objectStore: env.AUDIT_FILES }),
-        async extract() {
-          throw new Error("Extraction cannot run before malware scanning succeeds");
-        },
+        extract: createNativePdfExtractor({ db: env.DB, objectStore: env.AUDIT_FILES }),
       }).catch((error: unknown) => console.error("Document queue processing failed", error)));
     }
     return response;
