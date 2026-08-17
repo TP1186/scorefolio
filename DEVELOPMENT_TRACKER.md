@@ -89,7 +89,7 @@ Objective: Turn uploaded documents into normalized, traceable records.
 - Malware scanning before any document is processed:
   - [x] Implement the provider-neutral malware scanner adapter, lifecycle enforcement, quarantine behavior, and synthetic safe/unsafe/timeout/provider-error fixtures
   - [ ] Integrate and validate the selected production malware-scanning provider
-- [ ] Detect password-protected, corrupt, and unsupported files
+- [x] Detect password-protected, corrupt, and unsupported files
 - [ ] Extract text from native PDFs
 - [ ] Add OCR for scanned PDFs and images
 - [ ] Parse CSV and Excel workbooks without flattening important structure

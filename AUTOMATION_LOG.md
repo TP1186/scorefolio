@@ -25,3 +25,14 @@ This file records work performed by the native four-hour Codex development autom
 - Deployment: Private Sites version 6 (`appgprj_6a7510c317dc8191a043e95075ca6342~appgver_eab604e22ee4819188abbf4f9be13917`) deployed the exact pushed commit successfully as `appgdep_6a82406910dc8191be25ab4df4341736` at https://auditsentry-premium-audit-poc.quikslvr1186.chatgpt.site. A read-only unauthenticated smoke request returned HTTP 401, confirming the private authentication boundary remained active. The in-app browser handoff timed out without changing deployment status; an authenticated content smoke check was not available in this run.
 - Blocker: None for the provider-neutral adapter slice. Selecting, configuring, and validating a production malware-scanning provider remains an unresolved external integration and is not marked complete.
 - Recommended next item: Detect password-protected, corrupt, and unsupported files using synthetic fixtures, while keeping extraction gated on a future configured malware-scanning provider.
+
+### 2026-08-17T02:59:50Z
+
+- Selected item: Milestone 1 - Detect password-protected, corrupt, and unsupported files.
+- Outcome: Complete. After a clean malware verdict and before extraction, the worker now performs provider-neutral structural inspection of PDFs, CSVs, XLSX workbooks, PNGs, and JPEGs. Password-protected PDFs/XLSX files, corrupt or incomplete content, unsupported workbook layouts/compression, legacy XLS files, and unsupported MIME types are quarantined with customer-facing reasons; extraction is never called. Upload validation now requires a valid extension/MIME pairing, accepts encrypted OOXML containers for safe downstream explanation, and rejects invalid legacy Excel signatures.
+- Files changed: upload validation, structural document inspector, processing lifecycle and worker integration, synthetic inspection fixtures and tests, development tracker, and this log.
+- Validation: Focused document-processing suite passed 17 tests; `npm run lint` passed; `npm test` passed the production build and all 18 tests; `npm audit --omit=dev --audit-level=high` reported 0 vulnerabilities; `git diff --check` passed.
+- Commit and push: Pending final diff review and commit.
+- Deployment: Required because processing and upload behavior changed; pending exact-commit private Sites deployment.
+- Blocker: None.
+- Recommended next item: Extract text from native PDFs using clearly synthetic payroll and Form 941 fixtures, preserving source-page references and keeping extraction behind the clean-scan gate.

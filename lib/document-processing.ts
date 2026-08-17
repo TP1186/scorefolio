@@ -38,12 +38,17 @@ export type MalwareScanResult =
   | { outcome: "safe" }
   | { outcome: "needs_review" | "quarantined"; reason: string };
 
+export type DocumentInspectionResult =
+  | { outcome: "supported" }
+  | { outcome: "quarantined"; reason: string };
+
 type ExtractionResult =
   | { outcome: "ready" }
   | { outcome: "needs_review"; reason: string };
 
 export type DocumentProcessingAdapters = {
   scan(document: ProcessingDocument): Promise<MalwareScanResult>;
+  inspect(document: ProcessingDocument): Promise<DocumentInspectionResult>;
   extract(document: ProcessingDocument): Promise<ExtractionResult>;
 };
 
@@ -57,6 +62,12 @@ export async function runDocumentLifecycle(
   if (scan.outcome !== "safe") {
     await transition("scanning", scan.outcome, scan.reason);
     return scan.outcome;
+  }
+
+  const inspection = await adapters.inspect(document);
+  if (inspection.outcome !== "supported") {
+    await transition("scanning", inspection.outcome, inspection.reason);
+    return inspection.outcome;
   }
 
   await transition("scanning", "extracting");

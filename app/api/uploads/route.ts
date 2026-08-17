@@ -11,25 +11,26 @@ import {
 export const dynamic = "force-dynamic";
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
-const allowedExtensions = new Set(["pdf", "csv", "xlsx", "xls", "jpg", "jpeg", "png"]);
-const allowedMimeTypes = new Set([
-  "application/pdf",
-  "text/csv",
-  "application/csv",
-  "application/vnd.ms-excel",
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  "image/jpeg",
-  "image/png",
-]);
+const allowedTypesByExtension: Record<string, ReadonlySet<string>> = {
+  pdf: new Set(["application/pdf"]),
+  csv: new Set(["text/csv", "application/csv"]),
+  xls: new Set(["application/vnd.ms-excel"]),
+  xlsx: new Set(["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"]),
+  jpg: new Set(["image/jpeg"]),
+  jpeg: new Set(["image/jpeg"]),
+  png: new Set(["image/png"]),
+};
 
 function hasExpectedSignature(file: File, bytes: Uint8Array) {
   const extension = file.name.split(".").pop()?.toLowerCase();
+  const isOle = [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]
+    .every((value, index) => bytes[index] === value);
   if (extension === "pdf") return String.fromCharCode(...bytes.slice(0, 4)) === "%PDF";
   if (extension === "png") return bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47;
   if (extension === "jpg" || extension === "jpeg") return bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
-  if (extension === "xlsx") return bytes[0] === 0x50 && bytes[1] === 0x4b;
+  if (extension === "xlsx") return (bytes[0] === 0x50 && bytes[1] === 0x4b) || isOle;
   if (extension === "csv") return !bytes.includes(0);
-  return extension === "xls";
+  return extension === "xls" && isOle;
 }
 
 export async function POST(request: Request) {
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
   }
 
   const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
-  if (!allowedExtensions.has(extension) || !allowedMimeTypes.has(file.type)) {
+  if (!allowedTypesByExtension[extension]?.has(file.type)) {
     return NextResponse.json({ error: "Use PDF, CSV, Excel, JPG, or PNG files" }, { status: 415 });
   }
   if (!file.size || file.size > MAX_UPLOAD_BYTES) {

@@ -2,6 +2,7 @@
 import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
 import { drainDocumentJobs } from "../lib/document-processing";
+import { createDocumentInspector } from "../lib/document-inspection";
 import { createMalwareScanner } from "../lib/malware-scanning";
 
 interface Env {
@@ -48,6 +49,7 @@ const worker = {
       const scan = createMalwareScanner({ objectStore: env.AUDIT_FILES });
       ctx.waitUntil(drainDocumentJobs(env.DB, {
         scan,
+        inspect: createDocumentInspector({ objectStore: env.AUDIT_FILES }),
         async extract() {
           throw new Error("Extraction cannot run before malware scanning succeeds");
         },

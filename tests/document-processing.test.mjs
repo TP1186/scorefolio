@@ -5,7 +5,25 @@ import {
   assertDocumentTransition,
   runDocumentLifecycle,
 } from "../lib/document-processing.ts";
+import { createDocumentInspector, inspectDocumentBytes } from "../lib/document-inspection.ts";
 import { createMalwareScanner } from "../lib/malware-scanning.ts";
+import {
+  corruptCsv,
+  corruptJpeg,
+  corruptPdf,
+  corruptPng,
+  corruptXlsx,
+  legacyXls,
+  passwordProtectedPdf,
+  passwordProtectedXlsx,
+  supportedCsv,
+  supportedJpeg,
+  supportedPdf,
+  supportedPng,
+  supportedXlsx,
+  unsupportedCompressionXlsx,
+  unsupportedZip,
+} from "./fixtures/document-inspection-fixtures.mjs";
 import {
   errorProvider,
   safeProvider,
@@ -45,11 +63,14 @@ function syntheticObjectStore() {
   };
 }
 
+const supportedInspection = async () => ({ outcome: "supported" });
+
 async function runScanLifecycle(provider, timeoutMs = 100) {
   let extractionCalled = false;
   const { transitions, record } = collectTransitions();
   const outcome = await runDocumentLifecycle(document, {
     scan: createMalwareScanner({ objectStore: syntheticObjectStore(), provider, timeoutMs }),
+    inspect: supportedInspection,
     extract: async () => {
       extractionCalled = true;
       return { outcome: "ready" };
@@ -62,6 +83,7 @@ test("a safe supported document reaches ready through every processing phase", a
   const { transitions, record } = collectTransitions();
   const outcome = await runDocumentLifecycle(document, {
     scan: async () => ({ outcome: "safe" }),
+    inspect: supportedInspection,
     extract: async () => ({ outcome: "ready" }),
   }, record);
 
@@ -77,6 +99,7 @@ test("low-confidence extraction stops at needs_review with its reason", async ()
   const { transitions, record } = collectTransitions();
   const outcome = await runDocumentLifecycle(document, {
     scan: async () => ({ outcome: "safe" }),
+    inspect: supportedInspection,
     extract: async () => ({ outcome: "needs_review", reason: "Synthetic total requires confirmation" }),
   }, record);
 
@@ -89,6 +112,7 @@ test("unsafe content is quarantined before extraction", async () => {
   const { transitions, record } = collectTransitions();
   const outcome = await runDocumentLifecycle(document, {
     scan: async () => ({ outcome: "quarantined", reason: "Synthetic malware signature" }),
+    inspect: supportedInspection,
     extract: async () => {
       extractionCalled = true;
       return { outcome: "ready" };
@@ -109,6 +133,7 @@ test("adapter errors remain visible to the queue runner", async () => {
   const { record } = collectTransitions();
   await assert.rejects(() => runDocumentLifecycle(document, {
     scan: async () => { throw new Error("Synthetic scanner outage"); },
+    inspect: supportedInspection,
     extract: async () => ({ outcome: "ready" }),
   }, record), /Synthetic scanner outage/);
 });
@@ -181,12 +206,85 @@ test("an unconfigured production scanner fails closed before object access", asy
   assert.equal(objectRead, false);
 });
 
+test("supported synthetic document structures pass inspection", () => {
+  assert.equal(inspectDocumentBytes("application/pdf", supportedPdf).outcome, "supported");
+  assert.equal(inspectDocumentBytes("text/csv", supportedCsv).outcome, "supported");
+  assert.equal(inspectDocumentBytes("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", supportedXlsx).outcome, "supported");
+  assert.equal(inspectDocumentBytes("image/png", supportedPng).outcome, "supported");
+  assert.equal(inspectDocumentBytes("image/jpeg", supportedJpeg).outcome, "supported");
+});
+
+test("password-protected PDF and XLSX fixtures are quarantined with an actionable reason", () => {
+  for (const [mimeType, bytes] of [
+    ["application/pdf", passwordProtectedPdf],
+    ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", passwordProtectedXlsx],
+  ]) {
+    const result = inspectDocumentBytes(mimeType, bytes);
+    assert.equal(result.outcome, "quarantined");
+    assert.match(result.reason, /password-protected/i);
+    assert.match(result.reason, /unlocked copy/i);
+  }
+});
+
+test("corrupt PDF, XLSX, PNG, and CSV fixtures are quarantined", () => {
+  for (const [mimeType, bytes] of [
+    ["application/pdf", corruptPdf],
+    ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", corruptXlsx],
+    ["image/png", corruptPng],
+    ["image/jpeg", corruptJpeg],
+    ["text/csv", corruptCsv],
+  ]) {
+    const result = inspectDocumentBytes(mimeType, bytes);
+    assert.equal(result.outcome, "quarantined");
+    assert.match(result.reason, /corrupt|incomplete|UTF-8/i);
+  }
+});
+
+test("unsupported archive layouts, compression, legacy spreadsheets, and MIME types are quarantined", () => {
+  for (const [mimeType, bytes, expected] of [
+    ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", unsupportedZip, /not a supported Excel workbook/i],
+    ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", unsupportedCompressionXlsx, /unsupported compression/i],
+    ["application/vnd.ms-excel", legacyXls, /Legacy \.xls/i],
+    ["application/msword", Uint8Array.of(1, 2, 3), /document type is not supported/i],
+  ]) {
+    const result = inspectDocumentBytes(mimeType, bytes);
+    assert.equal(result.outcome, "quarantined");
+    assert.match(result.reason, expected);
+  }
+});
+
+test("structural inspection blocks extraction after a clean malware verdict", async () => {
+  let extractionCalled = false;
+  const { transitions, record } = collectTransitions();
+  const objectStore = {
+    async get() {
+      return { async arrayBuffer() { return passwordProtectedPdf.slice().buffer; } };
+    },
+  };
+  const outcome = await runDocumentLifecycle(document, {
+    scan: async () => ({ outcome: "safe" }),
+    inspect: createDocumentInspector({ objectStore }),
+    extract: async () => {
+      extractionCalled = true;
+      return { outcome: "ready" };
+    },
+  }, record);
+
+  assert.equal(outcome, "quarantined");
+  assert.equal(extractionCalled, false);
+  assert.deepEqual(transitions.map(({ to }) => to), ["scanning", "quarantined"]);
+  assert.match(transitions.at(-1).reason, /password-protected/i);
+});
+
 test("accepted uploads create durable jobs that the worker drains in the background", () => {
   const uploadRoute = readFileSync(new URL("../app/api/uploads/route.ts", import.meta.url), "utf8");
   const worker = readFileSync(new URL("../worker/index.ts", import.meta.url), "utf8");
   const migration = readFileSync(new URL("../drizzle/0001_clever_namor.sql", import.meta.url), "utf8");
 
   assert.match(uploadRoute, /INSERT INTO document_processing_jobs/);
+  assert.match(uploadRoute, /allowedTypesByExtension\[extension\]\?\.has\(file\.type\)/);
+  assert.match(uploadRoute, /extension === "xlsx".*\|\| isOle/);
+  assert.match(uploadRoute, /extension === "xls" && isOle/);
   assert.match(uploadRoute, /'uploaded'/);
   assert.match(worker, /ctx\.waitUntil\(drainDocumentJobs/);
   assert.match(migration, /CREATE TABLE `document_processing_jobs`/);
